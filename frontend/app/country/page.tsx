@@ -1,32 +1,51 @@
-'use client'
-import { Suspense } from 'react';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 interface Country {
   countryCode: string;
   name: string;
-  flagUrl?: string; // Bandeira será adicionada se possível
+  flagUrl?: string;
 }
 
-const Home = async () => {
-  // Usando a variável de ambiente BACKEND_URL para fazer o fetch
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:1080/api'; // Fallback para localhost se a variável não estiver definida
+const Home = () => {
+  const [countries, setCountries] = useState<Country[]>([]);
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:1080/api';
+  const router = useRouter();
 
-  // Fazendo o fetch dos dados diretamente da API
-  const response = await fetch(`${backendUrl}/countries`);
-  const countries: Country[] = await response.json();
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/countries`);
+        const data: Country[] = await response.json();
 
-  // Adicionando a URL da bandeira com base no countryCode
-  countries.forEach(country => {
-    country.flagUrl = `https://flagcdn.com/w320/${country.countryCode.toLowerCase()}.png`;
-  });
+        const countriesWithFlags = data.map((country) => ({
+          ...country,
+          flagUrl: `https://flagcdn.com/w320/${country.countryCode.toLowerCase()}.png`,
+        }));
+
+        setCountries(countriesWithFlags);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+      }
+    };
+
+    fetchCountries();
+  }, [backendUrl]);
+
+  const handleCountryClick = (countryCode: string) => {
+    router.push(`/country/${countryCode.toLowerCase()}`);
+  };
+  
 
   return (
     <Container>
       <Title>Available Countries</Title>
       <CountryList>
         {countries.map((country) => (
-          <Card key={country.countryCode}>
+          <Card key={country.countryCode} onClick={() => handleCountryClick(country.countryCode)}>
             <Image src={country.flagUrl} alt={country.name} />
             <Name>{country.name}</Name>
           </Card>
