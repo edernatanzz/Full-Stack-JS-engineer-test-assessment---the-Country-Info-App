@@ -1,0 +1,28 @@
+.country-details {
+    width: 60%;
+    padding: 15px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .country-details h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .country-details p {
+    margin: 5px 0;
+    font-size: 1em;
+    color: #555;
+  }
+  
+  .flag {
+    width: 120px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
