@@ -1,53 +1,56 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { Country } from '../types/Country';
 
-const API_URL = 'https://date.nager.at/api/v3';
-const POPULATION_DATA_API_URL = 'https://countriesnow.space/api/v0.1/countries/population';
-const FLAG_API_URL = 'https://countriesnow.space/api/v0.1/countries/flag/images';
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method === 'GET') {
-    if (req.query.countryCode) {
-      const { countryCode } = req.query;
+if (!backendUrl) {
+  console.error('Erro: NEXT_PUBLIC_BACKEND_URL não está definido.');
+  throw new Error('BACKEND_URL não configurado no arquivo .env');
+}
 
-      try {
-        const countryInfo = await fetch(`${API_URL}/CountryInfo/${countryCode}`);
-        const countryData = await countryInfo.json();
-
-        const populationData = await fetch(POPULATION_DATA_API_URL);
-        const populationDataJson = await populationData.json();
-
-        const flagData = await fetch(FLAG_API_URL);
-        const flagDataJson = await flagData.json();
-
-        const population = populationDataJson.data.find(
-          (c: any) => c.country.toLowerCase() === countryData.commonName.toLowerCase()
-        );
-
-        const flag = flagDataJson.data.find(
-          (c: any) => c.name.toLowerCase() === countryData.commonName.toLowerCase()
-        );
-
-        const response = {
-          countryCode,
-          borders: countryData.borders || [],
-          population: population ? population.populationCounts : [],
-          flag: flag ? flag.flag : null,
-        };
-
-        res.status(200).json(response);
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch country information.' });
-      }
-    } else {
-      try {
-        const countries = await fetch(`${API_URL}/AvailableCountries`);
-        const countriesData = await countries.json();
-        res.status(200).json(countriesData);
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch countries.' });
-      }
+/**
+ * Busca todos os países disponíveis na API.
+ * @returns Uma lista de países com dados mapeados.
+ */
+export const fetchCountries = async (): Promise<Country[]> => {
+  try {
+    const response = await fetch(`${backendUrl}/countries`);
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar países: ${response.statusText}`);
     }
-  } else {
-    res.status(405).json({ error: 'Method Not Allowed' });
+    const data: Country[] = await response.json();
+
+    return data.map((country) => ({
+      ...country,
+      flagUrl: `https://flagcdn.com/w320/${country.countryCode.toLowerCase()}.png`,
+    }));
+  } catch (error) {
+    console.error('Erro ao buscar países:', error);
+    throw new Error('Não foi possível obter os dados dos países');
+  }
+};
+
+/**
+ * Busca os dados de um país específico na API.
+ * @param countryCode - Código do país (ISO Alpha-2).
+ * @returns Dados detalhados do país.
+ */
+export const fetchCountryData = async (countryCode: string): Promise<Country> => {
+  try {
+    const response = await fetch(`${backendUrl}/countries/${countryCode}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('País não encontrado');
+      }
+      throw new Error(`Erro ao buscar dados do país: ${response.statusText}`);
+    }
+    const data: Country = await response.json();
+
+    // Adicionar URL da bandeira
+    data.flagUrl = `https://flagcdn.com/w320/${data.countryCode.toLowerCase()}.png`;
+
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar dados do país:', error);
+    throw new Error('Não foi possível obter os dados do país');
   }
 };

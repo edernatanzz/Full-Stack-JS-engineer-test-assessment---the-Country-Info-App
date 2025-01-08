@@ -1,50 +1,37 @@
 'use client'
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-
-interface Country {
-  countryCode: string;
-  name: string;
-  flagUrl?: string;
-}
+import { fetchCountries } from '@/services/api';
+import { Country } from '@/types/Country';
+import { useRouter } from 'next/navigation'; 
 
 const Home = () => {
   const [countries, setCountries] = useState<Country[]>([]);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:1080/api';
-  const router = useRouter();
+  const router = useRouter(); 
 
   useEffect(() => {
-    const fetchCountries = async () => {
+    const loadCountries = async () => {
       try {
-        const response = await fetch(`${backendUrl}/countries`);
-        const data: Country[] = await response.json();
-
-        const countriesWithFlags = data.map((country) => ({
-          ...country,
-          flagUrl: `https://flagcdn.com/w320/${country.countryCode.toLowerCase()}.png`,
-        }));
-
-        setCountries(countriesWithFlags);
+        const countriesData = await fetchCountries();
+        setCountries(countriesData);
       } catch (error) {
-        console.error('Error fetching countries:', error);
+        console.error(error);
       }
     };
 
-    fetchCountries();
-  }, [backendUrl]);
+    loadCountries();
+  }, []);
 
-  const handleCountryClick = (countryCode: string) => {
+  const navigateToCountry = (countryCode: string) => {
     router.push(`/country/${countryCode.toLowerCase()}`);
   };
-  
 
   return (
     <Container>
       <Title>Available Countries</Title>
       <CountryList>
         {countries.map((country) => (
-          <Card key={country.countryCode} onClick={() => handleCountryClick(country.countryCode)}>
+          <Card key={country.countryCode} onClick={() => navigateToCountry(country.countryCode)}>
             <Image src={country.flagUrl} alt={country.name} />
             <Name>{country.name}</Name>
           </Card>
@@ -56,7 +43,6 @@ const Home = () => {
 
 export default Home;
 
-// Styled Components
 const Container = styled.div`
   padding: 20px;
   background-color: #f5f5f5;

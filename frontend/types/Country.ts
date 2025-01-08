@@ -1,17 +1,18 @@
 export interface Country {
-    id: string;
-    name: string;
-    capital: string;
-    region: string;
-    population: number;
-    flag: string;
-    borders?: string[];
-    flagUrl?: string;
-    countryCode?: string;
-  }
-  
-  export interface PopulationData {
-    year: number;
-    population: number;
-  }
-  
+  countryCode: string;
+  name: string;
+  flagUrl?: string;
+  population: Array<{ year: number; value: number }>;
+  borders: Array<{ countryCode: string; commonName: string }>;
+
+}
+
+export interface Border {
+  countryCode: string;
+  commonName: string;
+}
+
+export interface PopulationData {
+  year: number;
+  value: number;
+}

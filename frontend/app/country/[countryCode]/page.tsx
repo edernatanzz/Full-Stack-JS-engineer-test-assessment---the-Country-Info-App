@@ -1,8 +1,9 @@
-'use client'
-import styled from "styled-components";
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Line } from "react-chartjs-2";
+'use client';
+
+import { useEffect, useState } from 'react';
+import styled from 'styled-components';
+
+import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,10 +13,120 @@ import {
   Title,
   Tooltip,
   Legend,
-} from "chart.js";
-import LoadingSpinner from "@/components/loading/spinner";
+} from 'chart.js';
+import { useParams } from 'next/navigation';
+import { Country } from '@/types/Country';
+import { fetchCountryData } from '@/services/api';
+import { useNavigateToCountry } from '@/utils/addFlagUrl';
+import LoadingSpinner from '@/components/loading/spinner';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+const CountryDetails = () => {
+  const { countryCode } = useParams();
+  const [country, setCountry] = useState<Country | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigateToCountry = useNavigateToCountry();
+
+  useEffect(() => {
+    const loadCountryData = async () => {
+      try {
+        const data = await fetchCountryData(countryCode);
+        setCountry(data);
+      } catch (error) {
+        console.error('Error loading country data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (countryCode) {
+      loadCountryData();
+    }
+  }, [countryCode]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!country) {
+    return (
+      <div>
+        <p>Country not found</p>
+      </div>
+    );
+  }
+
+  const populationYears = country.population.map((p) => p.year);
+  const populationValues = country.population.map((p) => p.value);
+
+  const chartData = {
+    labels: populationYears,
+    datasets: [
+      {
+        label: 'Population',
+        data: populationValues,
+        borderColor: '#4F46E5',
+        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+    },
+  };
+
+  return (
+    <PageContainer>
+      <StyledCard>
+        <CardHeader>
+          <div>
+            <CardTitle>{country.name}</CardTitle>
+            <p>Country Code: {countryCode.toUpperCase()}</p>
+          </div>
+          <FlagImage src={country.flag} alt={`${country.name} flag`} />
+        </CardHeader>
+      </StyledCard>
+
+      <StyledCard>
+        <CardHeader>
+          <CardTitle>Neighboring Countries</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {country.borders.length > 0 ? (
+            country.borders.map((border) => (
+              <Badge
+                key={border.countryCode}
+                onClick={() => navigateToCountry(border.countryCode)}
+              >
+                {border.commonName}
+              </Badge>
+            ))
+          ) : (
+            <p>No neighboring countries available.</p>
+          )}
+        </CardContent>
+      </StyledCard>
+
+      <StyledCard>
+        <CardHeader>
+          <CardTitle>Population Growth</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Line data={chartData} options={chartOptions} />
+        </CardContent>
+      </StyledCard>
+    </PageContainer>
+  );
+};
+
+export default CountryDetails;
 
 const PageContainer = styled.div`
   padding: 6rem 2rem 2rem;
@@ -72,133 +183,3 @@ const Badge = styled.button`
     background-color: #bee3f8;
   }
 `;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  height: 100vh;
-  background-color: #f3f4f6;
-`;
-
-const LoadingText = styled.p`
-  font-size: 1.25rem;
-  color: #4b5563;
-`;
-
-const CountryDetails = () => {
-  const { countryCode } = useParams();
-  const router = useRouter();
-  const [country, setCountry] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCountryData = async () => {
-      try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:1080/api";
-        const response = await fetch(`${backendUrl}/countries/${countryCode}`);
-        if (!response.ok) {
-          throw new Error("Country not found");
-        }
-        const data = await response.json();
-        setCountry(data);
-        setLoading(false);
-      } catch (error) {
-        console.error(error);
-        setLoading(false);
-      }
-    };
-
-    if (countryCode) {
-      fetchCountryData();
-    }
-  }, [countryCode]);
-
-  if (loading) {
-    return (
-      <LoadingContainer>
-        <LoadingText>Loading...</LoadingText>
-        <LoadingSpinner/>
-      </LoadingContainer>
-    );
-  }
-
-  if (!country) {
-    return (
-      <LoadingContainer>
-        <LoadingText>Country not found.</LoadingText>
-      </LoadingContainer>
-    );
-  }
-
-  const populationYears = country.population.map((p: any) => p.year);
-  const populationValues = country.population.map((p: any) => p.value);
-
-  const chartData = {
-    labels: populationYears,
-    datasets: [
-      {
-        label: "Population",
-        data: populationValues,
-        borderColor: "#4F46E5",
-        backgroundColor: "rgba(79, 70, 229, 0.2)",
-        tension: 0.4,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top" as const,
-      },
-    },
-  };
-
-  return (
-    <PageContainer>
-      <StyledCard>
-        <CardHeader>
-          <div>
-            <CardTitle>{country.name}</CardTitle>
-            <p>Country Code: {countryCode.toUpperCase()}</p>
-          </div>
-          <FlagImage src={country.flag} alt={`${country.name} flag`} />
-        </CardHeader>
-      </StyledCard>
-
-      <StyledCard>
-        <CardHeader>
-          <CardTitle>Neighboring Countries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {country.borders.length > 0 ? (
-            country.borders.map((border: any) => (
-              <Badge
-                key={border.countryCode}
-                onClick={() => router.push(`/country/${border.countryCode.toLowerCase()}`)}
-              >
-                {border.commonName}
-              </Badge>
-            ))
-          ) : (
-            <p>No neighboring countries available.</p>
-          )}
-        </CardContent>
-      </StyledCard>
-
-      <StyledCard>
-        <CardHeader>
-          <CardTitle>Population Growth</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Line data={chartData} options={chartOptions} />
-        </CardContent>
-      </StyledCard>
-    </PageContainer>
-  );
-};
-
-export default CountryDetails;

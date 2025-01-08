@@ -1,9 +1,11 @@
-// utils/addFlagUrl.ts
-import { Country } from '@/types/Country';
+import { useRouter } from 'next/navigation';
 
-export const addFlagUrl = (countries: Country[]): Country[] => {
-  return countries.map(country => ({
-    ...country,
-    flagUrl: `https://flagcdn.com/w320/${country.countryCode.toLowerCase()}.png`,
-  }));
+export const useNavigateToCountry = () => {
+  const router = useRouter();
+
+  const navigateToCountry = (countryCode: string) => {
+    router.push(`/country/${countryCode.toLowerCase()}`);
+  };
+
+  return navigateToCountry;
 };
