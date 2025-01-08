@@ -7,6 +7,7 @@ export interface Country {
     flag: string;
     borders?: string[];
     flagUrl?: string;
+    countryCode?: string;
   }
   
   export interface PopulationData {

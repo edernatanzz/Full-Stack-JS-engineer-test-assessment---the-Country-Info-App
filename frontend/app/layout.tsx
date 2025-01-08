@@ -1,4 +1,6 @@
 import StyledComponentsRegistry from "@/registry";
+import "../styles/globals.css";
+import Header from "@/components/header/header";
 
 export default function RootLayout({
     children,
@@ -8,13 +10,8 @@ export default function RootLayout({
     return (
       <html lang="en">
         <body>
-          <StyledComponentsRegistry> 
-          <header>
-            <h1>Country Info App</h1>
-            <nav>
-              <a href="/">Home</a> | <a href="/country">Countries</a>
-            </nav>
-          </header>
+          <StyledComponentsRegistry>
+          <Header/>
           <main>{children}</main>
           </StyledComponentsRegistry>
         </body>

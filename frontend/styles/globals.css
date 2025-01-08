@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*{
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+:root {
+  --color-primary-gradient-start: #7f53ac;
+  --color-primary-gradient-end: #647dee;
+  --color-white: #ffffff;
+  --color-text-hover: #bee3f8;
+  --color-border: #ddd;
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-bg-light: #f9fafb;
+  --color-text-presentation: #00d9c0;
+}
